@@ -4,9 +4,6 @@
 # In[1]:
 
 
-# ========================
-# IMPORT THƯ VIỆN CẦN THIẾT
-# ========================
 import math
 import numpy as np
 import heapq
@@ -16,27 +13,41 @@ import time
 import problem
 import importlib
 importlib.reload(problem)
-
-from problem import Problem, Node, GraphProblem, Graph, UndirectedGraph
-
-# %matplotlib inline
-
-
-# In[2]:
-
-
 import math
 import networkx as nx
 import matplotlib.pyplot as plt
 from matplotlib import lines
+from problem import Problem, Node, GraphProblem, Graph, UndirectedGraph
+import math
+import numpy as np
+import heapq
+import functools
+import itertools
+import networkx as nx
+import matplotlib.pyplot as plt
+import time
+import math
+import numpy as np
+import heapq
+import functools
+import itertools
+import networkx as nx
+import matplotlib.pyplot as plt
+import time
+
+# %matplotlib inline
+
+
+# In[9]:
+
 
 # --------------------------
-# TASK 1: MÔI TRƯỜNG VÀ ĐỊNH HÌNH BÀI TOÁN (Advanced)
+# TASK 1: ENVIRONMENT CREATION AND PROBLEM FORMULATION (Advanced)
 # --------------------------
-# Mô phỏng một bản đồ xe lăn thân thiện cho một khuôn viên (Campus)
-# với các tuyến đường (≥30 đoạn đường) và các tiện ích: nhà vệ sinh xe lăn, bãi đỗ xe, cửa hàng, thang máy.
+# Simulate a wheelchair-friendly campus map with at least 20-25 unique path segments
+# and key amenities: wheelchair-accessible restrooms, parking spaces, shops, and lifts.
 
-# Định nghĩa các node và tọa độ (cho việc trực quan hóa)
+# Define nodes and coordinates (for visualization)
 campus_locations = {
     "Entrance": (0, 0),
     "Building_A": (1, 1),
@@ -52,12 +63,13 @@ campus_locations = {
     "Administration": (2, 0),
     "Medical_Center": (4, 0.5),
     "Recreation_Center": (1, 5),
-    "Accessible_Restroom": (2.5, 3.5),  # Nhà vệ sinh xe lăn
-    "Shop": (1.8, 1.2),                # Cửa hàng
-    "Lift": (1.2, 2.8)                 # Thang máy
+    # Additional key amenities:
+    "Accessible_Restroom": (2.5, 3.5),  # Wheelchair-accessible restroom
+    "Shop": (1.8, 1.2),                # Shop
+    "Lift": (1.2, 2.8)                 # Lift
 }
 
-# Định nghĩa đồ thị với khoảng 25 unique path segments
+# Define the campus graph with around 25 unique path segments (using estimated connections)
 campus_graph_dict = {
     "Entrance": {"Building_A": 0.5, "Parking": 0.7, "Administration": 1.0, "Lift": 1.0},
     "Building_A": {"Entrance": 0.5, "Library": 0.3, "Auditorium": 0.8, "Shop": 0.7, "Cafeteria": 0.6},
@@ -75,50 +87,48 @@ campus_graph_dict = {
     "Recreation_Center": {"Medical_Center": 0.8},
     "Shop": {"Building_A": 0.7, "Library": 0.5},
     "Lift": {"Entrance": 1.0, "Accessible_Restroom": 0.9},
-    "Accessible_Restroom": {"Library": 0.4}  # Giảm bớt kết nối để đạt khoảng 25 segments
+    "Accessible_Restroom": {"Library": 0.4}  # Fewer connections to achieve around 25 segments
 }
-# Sử dụng một tập (set) để lưu các cạnh dưới dạng tuple sắp xếp (để tránh đếm lặp)
-unique_edges = set()
 
+# Count unique path segments (for an undirected graph)
+unique_edges = set()
 for node, neighbors in campus_graph_dict.items():
     for neighbor, cost in neighbors.items():
-        # Sắp xếp các node để tạo tuple không phụ thuộc thứ tự
         edge = tuple(sorted((node, neighbor)))
         unique_edges.add(edge)
 
-print("Tổng số unique path segments:", len(unique_edges))
+print("Total unique path segments:", len(unique_edges))
 
-# Kiểm tra số lượng đoạn đường (sau khi chuyển sang đồ thị không hướng, số unique edge ≥30)
+# Create an undirected graph and assign coordinates
 campus_map = UndirectedGraph(campus_graph_dict)
 campus_map.locations = campus_locations
 
 # --------------------------
-# Thiết lập trực quan hoá: định nghĩa màu sắc cho từng loại tiện ích
+# Visualization setup: Define colors for key amenities
 # --------------------------
-# Định nghĩa một dict lưu màu cho các node dựa trên loại tiện ích:
 node_colors = {}
 for node in campus_locations.keys():
     if "Restroom" in node:
-        node_colors[node] = "red"        # Nhà vệ sinh xe lăn
+        node_colors[node] = "red"        # Wheelchair-accessible restroom
     elif node == "Parking":
-        node_colors[node] = "orange"     # Bãi đỗ xe
+        node_colors[node] = "orange"       # Parking
     elif node == "Shop":
-        node_colors[node] = "blue"       # Cửa hàng
+        node_colors[node] = "blue"         # Shop
     elif node == "Lift":
-        node_colors[node] = "purple"     # Thang máy
+        node_colors[node] = "purple"       # Lift
     else:
-        node_colors[node] = "white"      # Các node khác
+        node_colors[node] = "white"        # Other nodes
 
-# Định nghĩa các vị trí cho nhãn (có thể điều chỉnh cho trực quan)
+# Define label positions (can be adjusted for better visualization)
 node_positions = campus_map.locations
-node_label_pos = { k:[v[0], v[1]-0.1] for k,v in node_positions.items() }
+node_label_pos = { k: [v[0], v[1]-0.1] for k, v in node_positions.items() }
 
-# Tạo edge weights từ đồ thị
-edge_weights = {(k, k2) : v2 for k, v in campus_map.graph_dict.items() for k2, v2 in v.items()}
+# Create edge weights from the graph
+edge_weights = {(k, k2): v2 for k, v in campus_graph_dict.items() for k2, v2 in v.items()}
 
-# Gói dữ liệu để hiển thị
+# Bundle data for visualization
 campus_graph_data = {
-    'graph_dict' : campus_map.graph_dict,
+    'graph_dict': campus_graph_dict,
     'node_colors': node_colors,
     'node_positions': node_positions,
     'node_label_positions': node_label_pos,
@@ -126,7 +136,7 @@ campus_graph_data = {
 }
 
 # --------------------------
-# Hàm trực quan hóa sử dụng networkx và matplotlib
+# Visualization function using networkx and matplotlib
 # --------------------------
 def show_map(graph_data, node_colors=None):
     G = nx.Graph(graph_data['graph_dict'])
@@ -141,7 +151,7 @@ def show_map(graph_data, node_colors=None):
             linewidths=1, edgecolors='k', with_labels=True, node_size=800)
     nx.draw_networkx_edge_labels(G, pos=node_positions, edge_labels=edge_weights, font_size=12)
 
-    # Thêm legend cho các marker
+    # Add legend for markers
     red_circle = lines.Line2D([], [], marker='o', color='w', label='Accessible Restroom',
                                markerfacecolor='red', markersize=15)
     orange_circle = lines.Line2D([], [], marker='o', color='w', label='Parking',
@@ -158,30 +168,21 @@ def show_map(graph_data, node_colors=None):
     plt.tight_layout()
     plt.show()
 
-# Hiển thị bản đồ campus với các marker đặc trưng cho các tiện ích
+# Display the campus map with key amenity markers
 show_map(campus_graph_data)
 
 
-# In[3]:
+# In[10]:
 
 
-import math
-import numpy as np
-import heapq
-import functools
-import itertools
-import networkx as nx
-import matplotlib.pyplot as plt
-import time
-
-# ---------- PHẦN 1: Biểu diễn môi trường dưới dạng ma trận kề ----------
+# ---------- PART 1: Representing the Environment as an Adjacency Matrix ----------
 def create_adjacency_matrix(graph):
     """
-    Chuyển đổi đồ thị (dạng undirected) từ dictionary sang ma trận kề.
-    Trả về danh sách các node (sắp xếp theo thứ tự nhất định) và ma trận numpy chứa chi phí giữa các node.
-    Nếu không có kết nối, giá trị là math.inf.
+    Converts an undirected graph (in dictionary format) to an adjacency matrix.
+    Returns a sorted list of nodes and a numpy matrix containing the cost between nodes.
+    If there is no connection, the value is math.inf.
     """
-    nodes = sorted(graph.nodes())  # Sắp xếp các node để đảm bảo thứ tự nhất định
+    nodes = sorted(graph.nodes())  # Sort nodes to ensure consistent ordering
     n = len(nodes)
     matrix = np.full((n, n), math.inf)
     for i in range(n):
@@ -195,7 +196,7 @@ def create_adjacency_matrix(graph):
 
 def plot_adjacency_matrix(nodes, matrix):
     """
-    Vẽ heatmap của ma trận kề. Các giá trị math.inf được mask để hiển thị màu trắng.
+    Plots a heatmap of the adjacency matrix. Values of math.inf are masked and displayed as white.
     """
     masked_matrix = np.ma.masked_where(np.isinf(matrix), matrix)
     cmap = plt.cm.viridis
@@ -210,7 +211,7 @@ def plot_adjacency_matrix(nodes, matrix):
     plt.tight_layout()
     plt.show()
 
-# ---------- PHẦN 2: Cài đặt thuật toán A* và Uniform Cost Search ----------
+# ---------- PART 2: Implementing the A* and Uniform Cost Search Algorithms ----------
 
 def memoize(fn, slot=None, maxsize=32):
     if slot:
@@ -229,11 +230,11 @@ def memoize(fn, slot=None, maxsize=32):
 
 class PriorityQueue:
     """
-    Hàng đợi ưu tiên với bộ đếm (counter) để đảm bảo thứ tự duy nhất trong trường hợp f(x) bằng nhau.
+    Priority Queue with a counter to ensure unique ordering when f(x) values are equal.
     """
     def __init__(self, order='min', f=lambda x: x):
         self.heap = []
-        self.counter = itertools.count()  # Bộ đếm duy nhất cho tie-breaker
+        self.counter = itertools.count()  # Unique counter for tie-breaker
         if order == 'min':
             self.f = f
         elif order == 'max':
@@ -333,7 +334,7 @@ def uniform_cost_search_graph(problem):
     iterations, all_node_colors, node = best_first_graph_search_for_vis(problem, lambda n: n.path_cost)
     return iterations, all_node_colors, node
 
-# ---------- PHẦN 3: Các hàm trực quan hóa ----------
+# ---------- PART 3: Visualization Functions ----------
 def show_map(graph_data, node_colors=None):
     G = nx.Graph(graph_data['graph_dict'])
     node_colors = node_colors or graph_data['node_colors']
@@ -354,36 +355,8 @@ def final_path_colors(initial_node_colors, problem, solution):
         final_colors[node] = "green"
     return final_colors
 
-def display_visual(graph_data, user_input, algorithm=None, problem=None):
-    initial_node_colors = graph_data['node_colors']
-    if user_input is False:
-        def slider_callback(iteration):
-            try:
-                show_map(graph_data, node_colors=all_node_colors[iteration])
-            except Exception as e:
-                pass
-        def visualize_callback(visualize):
-            if visualize is True:
-                button.value = False
-                global all_node_colors
-                iterations, all_node_colors, node = algorithm(problem)
-                solution = node.solution()
-                all_node_colors.append(final_path_colors(all_node_colors[0], problem, solution))
-                slider.max = len(all_node_colors) - 1
-                for i in range(slider.max + 1):
-                    slider.value = i
-                    time.sleep(.5)
-        slider = widgets.IntSlider(min=0, max=1, step=1, value=0)
-        slider_visual = widgets.interactive(slider_callback, iteration=slider)
-        display(slider_visual)
-        button = widgets.ToggleButton(value=False)
-        button_visual = widgets.interactive(visualize_callback, visualize=button)
-        display(button_visual)
-    else:
-        print("Chức năng GUI tương tác đang được sử dụng.")
-
-# ---------- PHẦN 4: Chuẩn bị dữ liệu để trực quan hóa ----------
-# Sử dụng campus_map đã được định nghĩa trong Task 1 (môi trường campus)
+# ---------- PART 4: Prepare Data for Visualization ----------
+# Using the campus_map defined in Task 1 (the campus environment)
 node_colors = {node: 'white' for node in campus_map.locations.keys()}
 node_positions = campus_map.locations
 node_label_pos = {k: [v[0], v[1]-0.1] for k, v in node_positions.items()}
@@ -397,14 +370,14 @@ campus_graph_data = {
     'edge_weights': edge_weights
 }
 
-# ---------- PHẦN 5: Test với các cặp điểm khác nhau ----------
+# ---------- PART 5: Testing with Different Start-End Pairs ----------
 test_cases = [
     ("Entrance", "Recreation_Center"),
     ("Building_A", "Gym"),
     ("Parking", "Library"),
     ("Dormitory", "Medical_Center"),
     ("Cafeteria", "Auditorium"),
-    ("Accessible_Restroom", "Shop")  # Thay vì sử dụng "Lounge"
+    ("Accessible_Restroom", "Shop")  # Instead of "Lounge"
 ]
 
 def test_search_algorithms(test_cases, search_algo, problem_class=GraphProblem, graph=campus_map, description="A* Search"):
@@ -413,44 +386,32 @@ def test_search_algorithms(test_cases, search_algo, problem_class=GraphProblem, 
         iterations, node_colors_list, node = search_algo(prob)
         path = node.solution()
         cost = node.path_cost
-        print(f"{description} từ '{start}' đến '{goal}':")
-        print("  Đường đi:", path)
-        print("  Chi phí:", cost)
-        print("  Số iterations:", iterations)
+        print(f"{description} from '{start}' to '{goal}':")
+        print("  Path:", path)
+        print("  Total cost:", cost)
+        print("  Iterations:", iterations)
         print("-" * 50)
 
-print("----- KẾT QUẢ TEST A* (Task 2) -----")
+print("----- A* Search Test Results (Task 2) -----")
 test_search_algorithms(test_cases, astar_search, problem_class=GraphProblem, graph=campus_map, description="A* Search")
 
-print("----- KẾT QUẢ TEST Dijkstra/Uniform Cost Search (Task 2) -----")
+print("----- Dijkstra/Uniform Cost Search Test Results (Task 2) -----")
 test_search_algorithms(test_cases, uniform_cost_search_graph, problem_class=GraphProblem, graph=campus_map, description="Dijkstra/Uniform Cost Search")
 
-# ---------- PHẦN 6: Hiển thị ma trận kề ----------
+# ---------- PART 6: Display the Adjacency Matrix ----------
 nodes_list, adj_matrix = create_adjacency_matrix(campus_map)
-print("Danh sách các địa điểm (nodes):")
+print("Nodes:")
 print(nodes_list)
-print("\nMa trận kề (Adjacency Matrix):")
+print("\nAdjacency Matrix:")
 print(adj_matrix)
 plot_adjacency_matrix(nodes_list, adj_matrix)
 
 
-# In[4]:
+# In[11]:
 
-
-import math
-import numpy as np
-import heapq
-import functools
-import itertools
-import networkx as nx
-import matplotlib.pyplot as plt
-import time
-
-# Giả sử các lớp cơ bản Problem, GraphProblem, Node, PriorityQueue, memoize, best_first_graph_search_for_vis,
-# astar_search, uniform_cost_search_graph đã được định nghĩa như trong Task 2.
 
 # -----------------------------------
-# MỞ RỘNG MÔI TRƯỜNG: Tạo đồ thị mở rộng với ≥30 unique path segments
+# EXPANDED ENVIRONMENT: Create an extended graph with ≥30 unique path segments
 # -----------------------------------
 campus_graph_dict_extended = {
     "Entrance": {"Building_A": 0.5, "Parking": 0.7, "Administration": 1.0, "Lift": 1.0},
@@ -472,17 +433,18 @@ campus_graph_dict_extended = {
     "Accessible_Restroom": {"Library": 0.4, "Building_C": 0.5}
 }
 
-# Sử dụng set để đếm số unique path segments
+# Use a set to count unique path segments
 unique_edges = set()
 for node, neighbors in campus_graph_dict_extended.items():
     for neighbor in neighbors.keys():
         edge = tuple(sorted((node, neighbor)))
         unique_edges.add(edge)
-print("Tổng số unique path segments (môi trường mở rộng):", len(unique_edges))
-#print("Unique path segments:", unique_edges)  # In ra nếu cần
+print("Total unique path segments (extended environment):", len(unique_edges))
+# Uncomment the following line if you want to print all unique edges:
+# print("Unique path segments:", unique_edges)
 
 # -----------------------------------
-# Định nghĩa tọa độ cho các node (môi trường campus)
+# Define coordinates for the nodes (campus environment)
 # -----------------------------------
 campus_locations_extended = {
     "Entrance": (0, 0),
@@ -503,26 +465,26 @@ campus_locations_extended = {
     "Lift": (1.2, 2.8),
     "Accessible_Restroom": (2.5, 3.5)
 }
-# Sử dụng một tập (set) để lưu các cạnh dưới dạng tuple sắp xếp (để tránh đếm lặp)
-unique_edges = set()
 
+# Use a set to count unique edges again (for verification)
+unique_edges = set()
 for node, neighbors in campus_graph_dict_extended.items():
     for neighbor, cost in neighbors.items():
-        # Sắp xếp các node để tạo tuple không phụ thuộc thứ tự
         edge = tuple(sorted((node, neighbor)))
         unique_edges.add(edge)
 
-print("Tổng số unique path segments:", len(unique_edges))
-# Tạo đồ thị không hướng và gán tọa độ (môi trường mở rộng)
+print("Total unique path segments:", len(unique_edges))
+
+# Create an undirected graph and assign coordinates (extended environment)
 campus_map_ext = UndirectedGraph(campus_graph_dict_extended)
 campus_map_ext.locations = campus_locations_extended
 
 # -----------------------------------
-# Thiết lập trực quan hoá: đánh dấu các tiện ích bằng màu sắc
+# Visualization Setup: Mark key amenities with colors
 # -----------------------------------
 node_colors_ext = {}
 for node in campus_locations_extended.keys():
-    if "Restroom" in node:      # Nhà vệ sinh xe lăn
+    if "Restroom" in node:      # Wheelchair-accessible restroom
         node_colors_ext[node] = "red"
     elif node == "Parking":
         node_colors_ext[node] = "orange"
@@ -534,7 +496,7 @@ for node in campus_locations_extended.keys():
         node_colors_ext[node] = "white"
 
 node_positions_ext = campus_map_ext.locations
-node_label_pos_ext = { k: [v[0], v[1]-0.1] for k,v in node_positions_ext.items() }
+node_label_pos_ext = { k: [v[0], v[1]-0.1] for k, v in node_positions_ext.items() }
 edge_weights_ext = {(k, k2): v2 for k, v in campus_graph_dict_extended.items() for k2, v2 in v.items()}
 
 campus_graph_data_ext = {
@@ -560,13 +522,13 @@ def show_map(graph_data, node_colors=None):
     plt.tight_layout()
     plt.show()
 
-# Hiển thị môi trường mở rộng
+# Display the extended environment
 show_map(campus_graph_data_ext)
 
 # -----------------------------------
-# PHẦN 5: So sánh Heuristic
+# PART 5: Heuristic Comparison
 # -----------------------------------
-# Định nghĩa các extra constraints (như đã định nghĩa)
+# Define extra environmental constraints
 campus_constraints = {
     tuple(sorted(("Entrance", "Building_A"))): 0.1,
     tuple(sorted(("Entrance", "Parking"))): 0.2,
@@ -592,6 +554,7 @@ campus_constraints = {
     tuple(sorted(("Building_B", "Administration"))): 0.1,
     tuple(sorted(("Dormitory", "Medical_Center"))): 0.2,
     tuple(sorted(("Auditorium", "Recreation_Center"))): 0.3,
+    # Extra constraints for new edges:
     tuple(sorted(("Entrance", "Lift"))): 0.2,
     tuple(sorted(("Building_A", "Shop"))): 0.1,
     tuple(sorted(("Shop", "Library"))): 0.1,
@@ -599,7 +562,7 @@ campus_constraints = {
     tuple(sorted(("Lift", "Accessible_Restroom"))): 0.2,
 }
 
-# Định nghĩa lớp bài toán mở rộng tích hợp các ràng buộc môi trường
+# Define the Extended Campus Problem class integrating environmental constraints
 class CampusProblemExtended(GraphProblem):
     def path_cost(self, c, A, action, B):
         base_cost = self.graph.get(A, B) or self.infinity
@@ -617,7 +580,7 @@ class CampusProblemExtended(GraphProblem):
         else:
             return self.infinity
 
-# Lớp bài toán ban đầu sử dụng heuristic chỉ khoảng cách Euclid
+# Define the Basic Campus Problem class using the original Euclidean distance heuristic
 class CampusProblemBasic(GraphProblem):
     def h(self, node):
         locs = getattr(self.graph, 'locations', None)
@@ -628,31 +591,29 @@ class CampusProblemBasic(GraphProblem):
         else:
             return self.infinity
 
-# Tạo instance và chạy thuật toán A* cho cả hai phương án
+# Create instances and run A* for both approaches
 campus_problem_ext = CampusProblemExtended("Entrance", "Recreation_Center", campus_map_ext)
 iterations_ext, all_node_colors_ext, node_ext = astar_search(campus_problem_ext)
-print("\n----- KẾT QUẢ TÌM KIẾM A* VỚI HEURISTIC MỞ RỘNG (CampusProblemExtended) -----")
-print("Đường đi tìm được:", node_ext.solution())
-print("Chi phí đường đi (bao gồm extra constraints):", node_ext.path_cost)
-print("Số iterations:", iterations_ext)
+print("\n----- A* Search Results with Extended Heuristic (CampusProblemExtended) -----")
+print("Path found:", node_ext.solution())
+print("Total cost (including extra constraints):", node_ext.path_cost)
+print("Iterations:", iterations_ext)
 
 campus_problem_basic = CampusProblemBasic("Entrance", "Recreation_Center", campus_map_ext)
 iterations_basic, all_node_colors_basic, node_basic = astar_search(campus_problem_basic)
-print("\n----- KẾT QUẢ TÌM KIẾM A* VỚI HEURISTIC BAN ĐẦU (CampusProblemBasic) -----")
-print("Đường đi tìm được:", node_basic.solution())
-print("Chi phí đường đi:", node_basic.path_cost)
-print("Số iterations:", iterations_basic)
+print("\n----- A* Search Results with Basic Heuristic (CampusProblemBasic) -----")
+print("Path found:", node_basic.solution())
+print("Total cost:", node_basic.path_cost)
+print("Iterations:", iterations_basic)
 
 
 # In[5]:
 
 
-import time
-
 def test_algorithms_performance(test_cases, a_star_algo, dijkstra_algo, problem_class, graph):
     results = []
     for start, goal in test_cases:
-        # Chạy A* và đo thời gian, số iterations
+        # Run A* and measure time and number of iterations
         prob = problem_class(start, goal, graph)
         start_time = time.time()
         iterations_a, _, node_a = a_star_algo(prob)
@@ -660,7 +621,7 @@ def test_algorithms_performance(test_cases, a_star_algo, dijkstra_algo, problem_
         cost_a = node_a.path_cost
         path_a = node_a.solution()
         
-        # Chạy Dijkstra (Uniform Cost Search) và đo thời gian, số iterations
+        # Run Dijkstra (Uniform Cost Search) and measure time and iterations
         start_time = time.time()
         iterations_d, _, node_d = dijkstra_algo(prob)
         time_d = time.time() - start_time
@@ -670,7 +631,7 @@ def test_algorithms_performance(test_cases, a_star_algo, dijkstra_algo, problem_
         results.append((start, goal, path_a, cost_a, iterations_a, time_a, path_d, cost_d, iterations_d, time_d))
     return results
 
-# Sử dụng test_cases đã định nghĩa (ví dụ: trong môi trường mở rộng campus_map_ext)
+# Use the predefined test_cases (e.g., in the extended environment campus_map_ext)
 results = test_algorithms_performance(test_cases, astar_search, uniform_cost_search_graph, GraphProblem, campus_map_ext)
 
 for res in results:
@@ -681,83 +642,7 @@ for res in results:
     print("-"*50)
 
 
-# In[6]:
-
-
-# from IPython.display import display, clear_output
-
-# def run_gui():
-#     # Dropdown cho điểm bắt đầu và đích (sử dụng các node từ campus_map_ext)
-#     start_dropdown = widgets.Dropdown(
-#         options=sorted(campus_map_ext.locations.keys()),
-#         description="Start:"
-#     )
-#     goal_dropdown = widgets.Dropdown(
-#         options=sorted(campus_map_ext.locations.keys()),
-#         description="Goal:"
-#     )
-#     # Dropdown cho lựa chọn thuật toán
-#     algo_dropdown = widgets.Dropdown(
-#         options=["A* Search", "Dijkstra/Uniform Cost Search"],
-#         description="Algorithm:"
-#     )
-    
-#     # Output để hiển thị thông tin kết quả
-#     info_output = widgets.Output()
-    
-#     # Nút thực thi tìm kiếm
-#     run_button = widgets.Button(description="Find Path")
-    
-#     def on_run_clicked(b):
-#         with info_output:
-#             clear_output()
-#             start = start_dropdown.value
-#             goal = goal_dropdown.value
-#             algo = algo_dropdown.value
-            
-#             # Tạo instance của GraphProblem sử dụng campus_map_ext (môi trường mở rộng đã định nghĩa)
-#             # prob = GraphProblem(start, goal, campus_map_ext)
-#             prob = CampusProblemExtended(start, goal, campus_map_ext)
-#             if algo == "A* Search":
-#                 iterations, node_colors_list, node = astar_search(prob)
-#             else:
-#                 iterations, node_colors_list, node = uniform_cost_search_graph(prob)
-            
-#             path = node.solution()
-#             cost = node.path_cost
-#             # Ước tính thời gian: giả sử mỗi đơn vị chi phí tương đương 10 phút (chỉ là ví dụ)
-#             estimated_time = cost * 10
-            
-#             print(f"Path from {start} to {goal}: {path}")
-#             print(f"Total cost: {cost}")
-#             print(f"Iterations: {iterations}")
-#             print(f"Estimated time to traverse: {estimated_time:.1f} minutes\n")
-            
-#             # Hiển thị thêm thông tin về các landmark (tiện ích) có trong môi trường
-#             print("Key landmarks in the environment:")
-#             for landmark in ["Accessible_Restroom", "Parking", "Shop", "Lift"]:
-#                 if landmark in campus_map_ext.locations:
-#                     print(f"  - {landmark} at {campus_map_ext.locations[landmark]}")
-            
-#             # Trực quan hóa bản đồ với đường đi được highlight
-#             final_colors = final_path_colors(node_colors, prob, path)
-#             show_map(campus_graph_data_ext, final_colors)
-    
-#     run_button.on_click(on_run_clicked)
-    
-#     gui = widgets.VBox([start_dropdown, goal_dropdown, algo_dropdown, run_button, info_output])
-#     display(gui)
-
-# run_gui()
-
-
-# In[7]:
-
-
-
-
-# In[ ]:
-
+# In[8]:
 
 
 
