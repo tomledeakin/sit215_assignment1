@@ -3,7 +3,6 @@ import numpy as np
 import heapq
 import matplotlib.pyplot as plt
 import networkx as nx
-import ipywidgets as widgets
 import time
 
 class Problem(object):
