@@ -12,7 +12,6 @@ import numpy as np
 import heapq
 import matplotlib.pyplot as plt
 import networkx as nx
-# import ipywidgets as widgets
 import time
 import problem
 import importlib
@@ -20,7 +19,7 @@ importlib.reload(problem)
 
 from problem import Problem, Node, GraphProblem, Graph, UndirectedGraph
 
-# get_ipython().run_line_magic('matplotlib', 'inline')
+get_ipython().run_line_magic('matplotlib', 'inline')
 
 
 # In[2]:
@@ -173,7 +172,6 @@ import functools
 import itertools
 import networkx as nx
 import matplotlib.pyplot as plt
-# import ipywidgets as widgets
 from IPython.display import display
 import time
 
@@ -447,7 +445,6 @@ import functools
 import itertools
 import networkx as nx
 import matplotlib.pyplot as plt
-# import ipywidgets as widgets
 from IPython.display import display
 import time
 
@@ -689,9 +686,8 @@ for res in results:
 # In[6]:
 
 
-# import ipywidgets as widgets
 # from IPython.display import display, clear_output
-#
+
 # def run_gui():
 #     # Dropdown cho điểm bắt đầu và đích (sử dụng các node từ campus_map_ext)
 #     start_dropdown = widgets.Dropdown(
@@ -707,20 +703,20 @@ for res in results:
 #         options=["A* Search", "Dijkstra/Uniform Cost Search"],
 #         description="Algorithm:"
 #     )
-#
+    
 #     # Output để hiển thị thông tin kết quả
 #     info_output = widgets.Output()
-#
+    
 #     # Nút thực thi tìm kiếm
 #     run_button = widgets.Button(description="Find Path")
-#
+    
 #     def on_run_clicked(b):
 #         with info_output:
 #             clear_output()
 #             start = start_dropdown.value
 #             goal = goal_dropdown.value
 #             algo = algo_dropdown.value
-#
+            
 #             # Tạo instance của GraphProblem sử dụng campus_map_ext (môi trường mở rộng đã định nghĩa)
 #             # prob = GraphProblem(start, goal, campus_map_ext)
 #             prob = CampusProblemExtended(start, goal, campus_map_ext)
@@ -728,33 +724,39 @@ for res in results:
 #                 iterations, node_colors_list, node = astar_search(prob)
 #             else:
 #                 iterations, node_colors_list, node = uniform_cost_search_graph(prob)
-#
+            
 #             path = node.solution()
 #             cost = node.path_cost
 #             # Ước tính thời gian: giả sử mỗi đơn vị chi phí tương đương 10 phút (chỉ là ví dụ)
 #             estimated_time = cost * 10
-#
+            
 #             print(f"Path from {start} to {goal}: {path}")
 #             print(f"Total cost: {cost}")
 #             print(f"Iterations: {iterations}")
 #             print(f"Estimated time to traverse: {estimated_time:.1f} minutes\n")
-#
+            
 #             # Hiển thị thêm thông tin về các landmark (tiện ích) có trong môi trường
 #             print("Key landmarks in the environment:")
 #             for landmark in ["Accessible_Restroom", "Parking", "Shop", "Lift"]:
 #                 if landmark in campus_map_ext.locations:
 #                     print(f"  - {landmark} at {campus_map_ext.locations[landmark]}")
-#
+            
 #             # Trực quan hóa bản đồ với đường đi được highlight
 #             final_colors = final_path_colors(node_colors, prob, path)
 #             show_map(campus_graph_data_ext, final_colors)
-#
+    
 #     run_button.on_click(on_run_clicked)
-#
+    
 #     gui = widgets.VBox([start_dropdown, goal_dropdown, algo_dropdown, run_button, info_output])
 #     display(gui)
-#
+
 # run_gui()
+
+
+# In[7]:
+
+
+get_ipython().system('jupyter nbconvert --to script your_notebook.ipynb')
 
 
 # In[ ]:
