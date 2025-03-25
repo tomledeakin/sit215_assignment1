@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import networkx as nx
 import time
 
-# Import necessary objects from your assignment module
+# Giả sử các giá trị cần thiết được import từ assignment1.py
 from assignment1 import (
     campus_map_ext,
     campus_graph_data_ext,
@@ -14,56 +14,82 @@ from assignment1 import (
     GraphProblem
 )
 
-st.title("Campus Wheelchair Navigation with Iterative Visualization")
+st.title("Campus Wheelchair Navigation with Iteration Slider")
 
-# Sidebar inputs for start, goal, and algorithm selection
+# --- Phần chọn tham số ---
 st.sidebar.header("Input Parameters")
-start_point = st.sidebar.selectbox("Select Start Point", sorted(campus_map_ext.locations.keys()))
-goal_point = st.sidebar.selectbox("Select Goal Point", sorted(campus_map_ext.locations.keys()))
+start = st.sidebar.selectbox("Select Start Point", sorted(campus_map_ext.locations.keys()))
+goal = st.sidebar.selectbox("Select Goal Point", sorted(campus_map_ext.locations.keys()))
 algo_choice = st.sidebar.selectbox("Select Algorithm", ["A* Search", "Dijkstra/Uniform Cost Search"])
 
-# When user clicks the "Find Path" button, run the algorithm once and store iterations in session_state.
+# --- Nút Find Path ---
 if st.sidebar.button("Find Path"):
-    prob = CampusProblemExtended(start_point, goal_point, campus_map_ext)
+    # Tạo problem
+    prob = CampusProblemExtended(start, goal, campus_map_ext)
+
+    # Chạy A* hoặc Dijkstra, chỉ chạy một lần
+    start_time = time.time()
     if algo_choice == "A* Search":
-        iterations, all_node_colors, node = astar_search(prob)
+        iterations, all_node_colors_list, node = astar_search(prob)
     else:
-        iterations, all_node_colors, node = uniform_cost_search_graph(prob)
+        iterations, all_node_colors_list, node = uniform_cost_search_graph(prob)
+    elapsed_time = time.time() - start_time
 
-    # Store results in session_state to avoid re-running on slider change.
+    path = node.solution()
+    cost = node.path_cost
+    estimated_time = cost * 10  # ví dụ: 10 phút mỗi đơn vị cost
+
+    # Lưu kết quả vào session_state để không tính lại mỗi khi slider thay đổi
     st.session_state['iterations'] = iterations
-    st.session_state['all_node_colors'] = all_node_colors
-    st.session_state['final_path'] = node.solution()
-    st.session_state['final_cost'] = node.path_cost
-    st.session_state['elapsed_time'] = time.time()  # Optionally store the timestamp
-    st.session_state['problem'] = prob
+    st.session_state['all_node_colors_list'] = all_node_colors_list
+    st.session_state['path'] = path
+    st.session_state['cost'] = cost
+    st.session_state['elapsed_time'] = elapsed_time
+    st.session_state['start'] = start
+    st.session_state['goal'] = goal
+    st.session_state['algo'] = algo_choice
 
-# If we have results stored, display the results and provide a slider for iterative visualization.
-if 'all_node_colors' in st.session_state:
+# --- Hiển thị kết quả + Slider (nếu đã có kết quả trong session_state) ---
+if 'all_node_colors_list' in st.session_state:
     st.write("### Results")
-    st.write(f"**Path from {start_point} to {goal_point}:** {st.session_state['final_path']}")
-    st.write(f"**Total cost:** {st.session_state['final_cost']}")
+    st.write(f"**Algorithm:** {st.session_state['algo']}")
+    st.write(f"**Path from {st.session_state['start']} to {st.session_state['goal']}:** {st.session_state['path']}")
+    st.write(f"**Total cost:** {st.session_state['cost']}")
     st.write(f"**Iterations:** {st.session_state['iterations']}")
-    # For example, assume each cost unit equals 10 minutes:
-    estimated_time = st.session_state['final_cost'] * 10
-    st.write(f"**Estimated traversal time:** {estimated_time:.1f} minutes")
+    st.write(f"**Estimated traversal time:** {st.session_state['cost'] * 10:.1f} minutes")
+    st.write(f"**Computation time:** {st.session_state['elapsed_time']:.4f} sec")
 
-    # Create a slider for selecting the iteration index
-    iteration_index = st.slider("Select Iteration",
-                                min_value=0,
-                                max_value=len(st.session_state['all_node_colors']) - 1,
-                                value=0, step=1)
+    # Tạo slider để chọn bước iteration
+    iteration_index = st.slider(
+        "Select Iteration",
+        min_value=0,
+        max_value=len(st.session_state['all_node_colors_list']) - 1,
+        value=0,
+        step=1
+    )
 
-    # Retrieve the node colors for the current iteration
-    current_node_colors = st.session_state['all_node_colors'][iteration_index]
+    # Lấy màu node tại iteration đã chọn
+    current_node_colors = st.session_state['all_node_colors_list'][iteration_index]
 
-    # Plot the graph for the current iteration
+    # Vẽ đồ thị
     fig, ax = plt.subplots(figsize=(10, 7))
     G = nx.Graph(campus_graph_data_ext['graph_dict'])
     pos = campus_graph_data_ext['node_positions']
-    nx.draw(G, pos=pos, with_labels=True,
-            node_color=[current_node_colors[node] for node in G.nodes()],
-            edge_color="gray", node_size=800, ax=ax)
-    nx.draw_networkx_edge_labels(G, pos=pos, edge_labels=campus_graph_data_ext['edge_weights'], font_size=10, ax=ax)
-    ax.set_title(f"Campus Map at Iteration {iteration_index}")
+    nx.draw(
+        G,
+        pos=pos,
+        with_labels=True,
+        node_color=[current_node_colors[node] for node in G.nodes()],
+        edge_color="gray",
+        node_size=800,
+        ax=ax
+    )
+    nx.draw_networkx_edge_labels(
+        G,
+        pos=pos,
+        edge_labels=campus_graph_data_ext['edge_weights'],
+        font_size=10,
+        ax=ax
+    )
+    ax.set_title(f"Campus Map - Iteration {iteration_index}")
     st.pyplot(fig)
