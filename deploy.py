@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import networkx as nx
 import time
 
-# Import necessary values from your assignment module
+# Import necessary objects from your assignment module
 from assignment1 import (
     campus_map_ext,
     campus_graph_data_ext,
@@ -14,47 +14,48 @@ from assignment1 import (
     GraphProblem
 )
 
-st.title("Campus Wheelchair Navigation with Iteration Visualization")
+st.title("Campus Wheelchair Navigation with Iterative Visualization")
 
-# Sidebar inputs
+# Sidebar inputs for start, goal, and algorithm selection
 st.sidebar.header("Input Parameters")
-start = st.sidebar.selectbox("Select Start Point", sorted(campus_map_ext.locations.keys()))
-goal = st.sidebar.selectbox("Select Goal Point", sorted(campus_map_ext.locations.keys()))
-algo = st.sidebar.selectbox("Select Algorithm", ["A* Search", "Dijkstra/Uniform Cost Search"])
+start_point = st.sidebar.selectbox("Select Start Point", sorted(campus_map_ext.locations.keys()))
+goal_point = st.sidebar.selectbox("Select Goal Point", sorted(campus_map_ext.locations.keys()))
+algo_choice = st.sidebar.selectbox("Select Algorithm", ["A* Search", "Dijkstra/Uniform Cost Search"])
 
+# When user clicks the "Find Path" button, run the algorithm once and store iterations in session_state.
 if st.sidebar.button("Find Path"):
-    start_time = time.time()
-    # Use the extended problem to incorporate constraints
-    prob = CampusProblemExtended(start, goal, campus_map_ext)
-
-    if algo == "A* Search":
-        iterations, all_node_colors_list, node = astar_search(prob)
+    prob = CampusProblemExtended(start_point, goal_point, campus_map_ext)
+    if algo_choice == "A* Search":
+        iterations, all_node_colors, node = astar_search(prob)
     else:
-        iterations, all_node_colors_list, node = uniform_cost_search_graph(prob)
+        iterations, all_node_colors, node = uniform_cost_search_graph(prob)
 
-    elapsed_time = time.time() - start_time
-    path = node.solution()
-    cost = node.path_cost
-    estimated_time = cost * 10  # Example: 10 minutes per cost unit
+    # Store results in session_state to avoid re-running on slider change.
+    st.session_state['iterations'] = iterations
+    st.session_state['all_node_colors'] = all_node_colors
+    st.session_state['final_path'] = node.solution()
+    st.session_state['final_cost'] = node.path_cost
+    st.session_state['elapsed_time'] = time.time()  # Optionally store the timestamp
+    st.session_state['problem'] = prob
 
+# If we have results stored, display the results and provide a slider for iterative visualization.
+if 'all_node_colors' in st.session_state:
     st.write("### Results")
-    st.write(f"**Path from {start} to {goal}:** {path}")
-    st.write(f"**Total cost:** {cost}")
-    st.write(f"**Iterations:** {iterations}")
+    st.write(f"**Path from {start_point} to {goal_point}:** {st.session_state['final_path']}")
+    st.write(f"**Total cost:** {st.session_state['final_cost']}")
+    st.write(f"**Iterations:** {st.session_state['iterations']}")
+    # For example, assume each cost unit equals 10 minutes:
+    estimated_time = st.session_state['final_cost'] * 10
     st.write(f"**Estimated traversal time:** {estimated_time:.1f} minutes")
-    st.write(f"**Computation time:** {elapsed_time:.4f} sec")
 
-    st.write("#### Key Landmarks in the Environment:")
-    for landmark in ["Accessible_Restroom", "Parking", "Shop", "Lift"]:
-        if landmark in campus_map_ext.locations:
-            st.write(f"- **{landmark}** at {campus_map_ext.locations[landmark]}")
+    # Create a slider for selecting the iteration index
+    iteration_index = st.slider("Select Iteration",
+                                min_value=0,
+                                max_value=len(st.session_state['all_node_colors']) - 1,
+                                value=0, step=1)
 
-    # Add a slider to visualize each iteration step
-    iteration_index = st.slider("Select Iteration", min_value=0, max_value=len(all_node_colors_list) - 1, value=0,
-                                step=1)
-
-    # Get node colors for the current iteration
-    current_node_colors = all_node_colors_list[iteration_index]
+    # Retrieve the node colors for the current iteration
+    current_node_colors = st.session_state['all_node_colors'][iteration_index]
 
     # Plot the graph for the current iteration
     fig, ax = plt.subplots(figsize=(10, 7))
@@ -63,7 +64,6 @@ if st.sidebar.button("Find Path"):
     nx.draw(G, pos=pos, with_labels=True,
             node_color=[current_node_colors[node] for node in G.nodes()],
             edge_color="gray", node_size=800, ax=ax)
-    nx.draw_networkx_edge_labels(G, pos=pos, edge_labels=campus_graph_data_ext['edge_weights'],
-                                 font_size=10, ax=ax)
+    nx.draw_networkx_edge_labels(G, pos=pos, edge_labels=campus_graph_data_ext['edge_weights'], font_size=10, ax=ax)
     ax.set_title(f"Campus Map at Iteration {iteration_index}")
     st.pyplot(fig)
