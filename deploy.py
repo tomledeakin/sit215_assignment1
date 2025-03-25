@@ -67,7 +67,7 @@ def draw_iteration(iter_idx):
     nx.draw(
         G, pos=pos, with_labels=True,
         node_color=[current_node_colors[node] for node in G.nodes()],
-        edge_color="green", node_size=800, ax=ax
+        edge_color="gray", node_size=800, ax=ax
     )
     nx.draw_networkx_edge_labels(
         G, pos=pos,
