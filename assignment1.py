@@ -354,33 +354,33 @@ def final_path_colors(initial_node_colors, problem, solution):
         final_colors[node] = "green"
     return final_colors
 
-# def display_visual(graph_data, user_input, algorithm=None, problem=None):
-#     initial_node_colors = graph_data['node_colors']
-#     if user_input is False:
-#         def slider_callback(iteration):
-#             try:
-#                 show_map(graph_data, node_colors=all_node_colors[iteration])
-#             except Exception as e:
-#                 pass
-#         def visualize_callback(visualize):
-#             if visualize is True:
-#                 button.value = False
-#                 global all_node_colors
-#                 iterations, all_node_colors, node = algorithm(problem)
-#                 solution = node.solution()
-#                 all_node_colors.append(final_path_colors(all_node_colors[0], problem, solution))
-#                 slider.max = len(all_node_colors) - 1
-#                 for i in range(slider.max + 1):
-#                     slider.value = i
-#                     time.sleep(.5)
-#         slider = widgets.IntSlider(min=0, max=1, step=1, value=0)
-#         slider_visual = widgets.interactive(slider_callback, iteration=slider)
-#         display(slider_visual)
-#         button = widgets.ToggleButton(value=False)
-#         button_visual = widgets.interactive(visualize_callback, visualize=button)
-#         display(button_visual)
-#     else:
-#         print("Chức năng GUI tương tác đang được sử dụng.")
+def display_visual(graph_data, user_input, algorithm=None, problem=None):
+    initial_node_colors = graph_data['node_colors']
+    if user_input is False:
+        def slider_callback(iteration):
+            try:
+                show_map(graph_data, node_colors=all_node_colors[iteration])
+            except Exception as e:
+                pass
+        def visualize_callback(visualize):
+            if visualize is True:
+                button.value = False
+                global all_node_colors
+                iterations, all_node_colors, node = algorithm(problem)
+                solution = node.solution()
+                all_node_colors.append(final_path_colors(all_node_colors[0], problem, solution))
+                slider.max = len(all_node_colors) - 1
+                for i in range(slider.max + 1):
+                    slider.value = i
+                    time.sleep(.5)
+        slider = widgets.IntSlider(min=0, max=1, step=1, value=0)
+        slider_visual = widgets.interactive(slider_callback, iteration=slider)
+        display(slider_visual)
+        button = widgets.ToggleButton(value=False)
+        button_visual = widgets.interactive(visualize_callback, visualize=button)
+        display(button_visual)
+    else:
+        print("Chức năng GUI tương tác đang được sử dụng.")
 
 # ---------- PHẦN 4: Chuẩn bị dữ liệu để trực quan hóa ----------
 # Sử dụng campus_map đã được định nghĩa trong Task 1 (môi trường campus)
@@ -754,7 +754,6 @@ for res in results:
 # In[7]:
 
 
-get_ipython().system('jupyter nbconvert --to script assignment1.ipynb')
 
 
 # In[ ]:
