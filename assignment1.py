@@ -12,7 +12,7 @@ import numpy as np
 import heapq
 import matplotlib.pyplot as plt
 import networkx as nx
-import ipywidgets as widgets
+# import ipywidgets as widgets
 import time
 import problem
 import importlib
@@ -173,7 +173,7 @@ import functools
 import itertools
 import networkx as nx
 import matplotlib.pyplot as plt
-import ipywidgets as widgets
+# import ipywidgets as widgets
 from IPython.display import display
 import time
 
@@ -447,7 +447,7 @@ import functools
 import itertools
 import networkx as nx
 import matplotlib.pyplot as plt
-import ipywidgets as widgets
+# import ipywidgets as widgets
 from IPython.display import display
 import time
 
