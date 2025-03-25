@@ -19,7 +19,7 @@ importlib.reload(problem)
 
 from problem import Problem, Node, GraphProblem, Graph, UndirectedGraph
 
-# get_ipython().run_line_magic('matplotlib', 'inline')
+# %matplotlib inline
 
 
 # In[2]:
@@ -753,7 +753,7 @@ for res in results:
 # run_gui()
 
 
-# In[8]:
+# In[7]:
 
 
 get_ipython().system('jupyter nbconvert --to script assignment1.ipynb')
